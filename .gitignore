@@ -5,3 +5,4 @@ __pycache__/
 .DS_Store
 istio-*/          # istioctl download folder
 *.log
+istio-*/
