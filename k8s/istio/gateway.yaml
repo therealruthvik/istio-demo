@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: istio-demo-gateway
+  namespace: istio-demo
+spec:
+  selector:
+    istio: ingressgateway          # uses the default Istio ingress gateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "istio-demo.local"
+        - "*"                      # also accept any host (for curl with -H)

@@ -1,0 +1,35 @@
+# ── Fault Injection – database-svc (DEMO ONLY, apply manually) ───────────────
+# Injects a 3s delay + 20% HTTP 500 errors into database-svc traffic.
+# Shows Istio's resilience features (retries absorb the 500s).
+#
+# Apply:  kubectl apply -f k8s/istio/fault-injection.yaml
+# Remove: kubectl delete -f k8s/istio/fault-injection.yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: database-vs-fault
+  namespace: istio-demo
+spec:
+  hosts:
+    - database-svc
+  gateways:
+    - mesh
+  http:
+    - fault:
+        delay:
+          percentage:
+            value: 50.0            # 50% of requests get a 3s delay
+          fixedDelay: 3s
+        abort:
+          percentage:
+            value: 20.0            # 20% of requests return HTTP 500
+          httpStatus: 500
+      route:
+        - destination:
+            host: database-svc
+            port:
+              number: 8000
+      retries:
+        attempts: 3
+        perTryTimeout: 4s
+        retryOn: "5xx,reset,connect-failure"

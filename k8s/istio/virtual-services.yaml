@@ -1,0 +1,79 @@
+# ── Frontend VirtualService (external entry point) ────────────────────────────
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: frontend-vs
+  namespace: istio-demo
+spec:
+  hosts:
+    - "istio-demo.local"
+    - "frontend"
+  gateways:
+    - istio-demo-gateway
+    - mesh                         # also applies inside the mesh
+  http:
+    - match:
+        - uri:
+            prefix: /api
+        - uri:
+            prefix: /health
+        - uri:
+            exact: /
+      route:
+        - destination:
+            host: frontend
+            port:
+              number: 8000
+      timeout: 10s
+      retries:
+        attempts: 3
+        perTryTimeout: 3s
+        retryOn: "5xx,reset,connect-failure"
+
+---
+# ── Backend VirtualService (mesh-internal) ────────────────────────────────────
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backend-vs
+  namespace: istio-demo
+spec:
+  hosts:
+    - backend
+  gateways:
+    - mesh
+  http:
+    - route:
+        - destination:
+            host: backend
+            port:
+              number: 8000
+      timeout: 8s
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: "5xx,reset,connect-failure"
+
+---
+# ── database-svc VirtualService (mesh-internal) ───────────────────────────────
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: database-vs
+  namespace: istio-demo
+spec:
+  hosts:
+    - database-svc
+  gateways:
+    - mesh
+  http:
+    - route:
+        - destination:
+            host: database-svc
+            port:
+              number: 8000
+      timeout: 5s
+      retries:
+        attempts: 2
+        perTryTimeout: 2s
+        retryOn: "5xx,reset,connect-failure"
